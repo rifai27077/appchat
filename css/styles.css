@@ -14,7 +14,9 @@ body {
     padding: 2rem;
     box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
-    width: 300px;
+    width: 90%;
+    max-width: 400px; /* Maksimal lebar untuk perangkat yang lebih besar */
+    margin: 1rem;
 }
 
 .container h2 {
@@ -23,8 +25,8 @@ body {
 }
 
 .container input {
-    width: 100%;
-    padding: 0.5rem;
+    width: 93.5%;
+    padding: 0.75rem; /* Mengurangi jarak dalam input agar lebih cocok pada layar kecil */
     margin-bottom: 1rem;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -73,7 +75,7 @@ body {
     font-size: 1rem;
 }
 
-.social-login button img {
+.social-login button svg {
     margin-right: 0.5rem;
     width: 24px;
     height: 24px;
@@ -81,4 +83,31 @@ body {
 
 .social-login button:hover {
     background-color: #f1f1f1;
+}
+
+/* Responsive Styles */
+@media (max-width: 600px) {
+    .container {
+        padding: 1rem;
+        width: 100%;
+        box-shadow: none; /* Mengurangi bayangan pada perangkat kecil untuk tampilan lebih bersih */
+    }
+
+    .container h2 {
+        font-size: 1.5rem; /* Mengurangi ukuran font judul agar lebih sesuai pada layar kecil */
+        margin-bottom: 1.5rem;
+    }
+
+    .container input {
+        padding: 0.75rem;
+        font-size: 0.875rem; /* Mengurangi ukuran font input untuk kenyamanan di layar kecil */
+    }
+
+    .container button {
+        font-size: 0.875rem; /* Mengurangi ukuran font tombol agar lebih sesuai di layar kecil */
+    }
+
+    .social-login button {
+        font-size: 0.875rem; /* Mengurangi ukuran font tombol Google */
+    }
 }
