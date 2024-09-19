@@ -3,104 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SchoolApp - Register</title>
+    <title>SchoolApp - Explore</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #fff;
+        }
+        .container {
+            text-align: center;
+        }
+        .intro-section {
+            padding: 20px;
+        }
+        .icon {
+            margin-bottom: 20px;
+        }
+        .icon img {
+            max-width: 100%;
+            height: auto;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #777;
+            margin-bottom: 30px;
+        }
+        .buttons {
+            display: flex;
+            flex-direction: column;
+        }
+        .btn {
+            background-color: black;
+            color: white;
+            padding: 12px 20px;
+            margin: 10px 0;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .btn-outline {
+            background-color: transparent;
+            color: black;
+            border: 1px solid black;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h2>Register</h2>
-        <form id="register-form">
-            <input type="text" id="username" placeholder="Username" required>
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <input type="password" id="confirm-password" placeholder="Confirm Password" required>
-            <button type="submit">Register</button>
-        </form>
-        <div class="social-login">
-            <button id="google-register" class="google-btn">
-                <!-- SVG Google Icon -->
-                <svg fill="#1C2033" width="24" height="24" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M61.5016 29.2001H32.8016V37.7001H53.4016C52.3016 49.5001 42.7016 54.6001 33.4016 54.6001C21.6016 54.6001 11.1016 45.4001 11.1016 32.1001C11.1016 19.3001 21.1016 9.60011 33.4016 9.60011C42.8016 9.60011 48.5016 15.7001 48.5016 15.7001L54.3016 9.60011C54.3016 9.60011 46.5016 1.10011 33.0016 1.10011C15.2016 1.00011 1.60156 15.9001 1.60156 32.0001C1.60156 47.6001 14.4016 63.0001 33.3016 63.0001C50.0016 63.0001 62.0016 51.7001 62.0016 34.8001C62.1016 31.3001 61.5016 29.2001 61.5016 29.2001Z"/>
-                </svg>
-                <span>Register with Google</span>
-            </button>
-        </div>
-        <div class="link">
-            <p>Already have an account? <a href="login.html">Login here</a></p>
+        <div class="intro-section">
+            <h1>Explore the app</h1>
+            <div class="icon">
+                <img src="assets/logo.png" alt="logo">
+            </div>
+            <p>Now your finances are in one place and always under control</p>
+            <div class="buttons">
+                <a href="login.html" class="btn">Sign In</a>
+                <a href="register.html" class="btn btn-outline">Sign Up</a>
+            </div>
         </div>
     </div>
-
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, updateProfile, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAVnc78CVeW18QI_8PGMoUxc8rQKuclaSM",
-            authDomain: "socialmediaapp-33856.firebaseapp.com",
-            projectId: "socialmediaapp-33856",
-            storageBucket: "socialmediaapp-33856.appspot.com",
-            messagingSenderId: "832803806835",
-            appId: "1:832803806835:web:4f4c4d1739e0cee6281406",
-            measurementId: "G-WSQL8E6VYG"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
-
-        document.getElementById('register-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-
-            if (password !== confirmPassword) {
-                alert("Passwords do not match.");
-                return;
-            }
-
-            createUserWithEmailAndPassword(auth, email, password)
-                .then(userCredential => {
-                    const user = userCredential.user;
-
-                    // Update profile with username
-                    updateProfile(user, {
-                        displayName: username
-                    }).then(() => {
-                        // Send email verification
-                        sendEmailVerification(user)
-                            .then(() => {
-                                alert("Registration successful! Please check your email to verify your account.");
-                                window.location.href = "login.html";
-                            })
-                            .catch(error => {
-                                console.error("Error sending email verification: ", error.message);
-                                alert("Registration successful but failed to send verification email. Please try again later.");
-                            });
-                    }).catch(error => {
-                        console.error("Error updating profile: ", error.message);
-                    });
-                })
-                .catch(error => {
-                    console.error("Error registering: ", error.message);
-                    alert(`Registration failed: ${error.message}`);
-                });
-        });
-
-        document.getElementById('google-register').addEventListener('click', function() {
-            signInWithPopup(auth, googleProvider)
-                .then(result => {
-                    alert("Google registration successful!");
-                    window.location.href = "chat.html";
-                })
-                .catch(error => {
-                    console.error("Error signing in with Google: ", error.message);
-                    alert(`Google registration failed: ${error.message}`);
-                });
-        });
-    </script>
 </body>
 </html>
