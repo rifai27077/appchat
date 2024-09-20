@@ -10,7 +10,7 @@
     <div class="container">
         <h2>Log in</h2>
         <form id="login-form">
-            <input type="text" id="email-or-username" placeholder="Email or Username" required>
+            <input type="text" id="email-or-username" placeholder="Email" required>
             <input type="password" id="password" placeholder="Password" required>
             <button type="submit">Log In</button>
         </form>
@@ -24,7 +24,6 @@
         <p>Don't have an account? <a href="register.html">Sign up</a></p>
     </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
@@ -43,13 +42,13 @@
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
-        document.querySelector('form').addEventListener('submit', function(e) {
+        document.querySelector('#login-form').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const email = document.querySelector('input[type="email"]').value;
-            const password = document.querySelector('input[type="password"]').value;
+            const emailOrUsername = document.getElementById('email-or-username').value;
+            const password = document.getElementById('password').value;
 
-            signInWithEmailAndPassword(auth, email, password)
+            signInWithEmailAndPassword(auth, emailOrUsername, password)
                 .then(userCredential => {
                     const user = userCredential.user;
                     if (user.emailVerified) {
@@ -60,7 +59,7 @@
                 })
                 .catch(error => {
                     console.error("Error logging in: ", error.message);
-                    alert("Login gagal, periksa kembali email dan password Anda.");
+                    alert("Login gagal, periksa kembali email/username dan password Anda.");
                 });
         });
 
