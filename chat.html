@@ -85,6 +85,7 @@
             gap: 10px;
             max-width: 60%;
             word-wrap: break-word;
+            position: relative; /* For positioning delete button */
         }
 
         #messages li.self {
@@ -125,6 +126,24 @@
             color: #ccc;
             margin-top: 5px;
             text-align: right;
+        }
+
+        .delete-menu {
+            position: absolute;
+            left: -70px; /* Position delete button to the left */
+            display: none; /* Initially hidden */
+        }
+
+        .delete-menu button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .delete-menu button:hover {
+            background-color: darkred;
         }
 
         form {
@@ -218,6 +237,22 @@
             }
         };
 
+        // Show delete menu
+        const showDeleteMenu = (li) => {
+            hideDeleteMenus();
+            const deleteMenu = li.querySelector('.delete-menu');
+            if (deleteMenu) {
+                deleteMenu.style.display = 'block';
+            }
+        };
+
+        // Hide all delete menus
+        const hideDeleteMenus = () => {
+            document.querySelectorAll('.delete-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        };
+
         // Send message
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.querySelector('form');
@@ -274,7 +309,38 @@
                 const messagesList = document.getElementById('messages');
                 if (messagesList) {
                     messagesList.innerHTML = html;
-                    messagesList.scrollTop = messagesList.scrollHeight; // Scroll to the bottom
+
+                    messagesList.scrollTop = messagesList.scrollHeight;
+
+                    document.querySelectorAll('#messages li').forEach(li => {
+                        let longPressTimeout;
+
+                        li.addEventListener('mousedown', (event) => {
+                            longPressTimeout = setTimeout(() => {
+                                showDeleteMenu(li);
+                            }, 1000);
+                        });
+
+                        li.addEventListener('mouseup', (event) => {
+                            clearTimeout(longPressTimeout);
+                        });
+
+                        li.addEventListener('touchstart', (event) => {
+                            longPressTimeout = setTimeout(() => {
+                                showDeleteMenu(li);
+                            }, 1000);
+                        });
+
+                        li.addEventListener('touchend', (event) => {
+                            clearTimeout(longPressTimeout);
+                        });
+
+                        document.addEventListener('click', (event) => {
+                            if (!event.target.closest('.delete-menu') && !event.target.closest('li')) {
+                                hideDeleteMenus();
+                            }
+                        });
+                    });
                 }
             });
         });
