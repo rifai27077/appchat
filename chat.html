@@ -315,6 +315,35 @@
                 }
             });
 
+            // Scroll button
+            const messagesContainer = document.getElementById('messages');
+            const scrollButton = document.getElementById('scroll-button');
+
+            // Function to scroll to the bottom of the messages
+            function scrollToBottom() {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            // Show the scroll button if the user is not at the bottom
+            messagesContainer.addEventListener('scroll', () => {
+                const isAtBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop === messagesContainer.clientHeight;
+                if (!isAtBottom) {
+                    scrollButton.style.display = 'block';
+                } else {
+                    scrollButton.style.display = 'none';
+                }
+            });
+
+            // Scroll to bottom when the button is clicked
+            scrollButton.addEventListener('click', () => {
+                scrollToBottom();
+            });
+
+            // Automatically scroll to bottom when a new message is added
+            const observer = new MutationObserver(scrollToBottom);
+            observer.observe(messagesContainer, { childList: true });
+
+
             // Real-time message listener
             const messagesRef = collection(db, "messages");
             const messagesQuery = query(messagesRef, orderBy("timestamp", "asc"));
@@ -400,6 +429,10 @@
 
         <!-- Messages List -->
         <ul id="messages"></ul>
+
+        <button id="scroll-button" style="display: none; position: fixed; bottom: 80px; right: 20px; background-color: #1F8E44; color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 20px; cursor: pointer;">
+            ↓
+        </button>
 
         <!-- Message Input Form -->
         <form id="message-form">
