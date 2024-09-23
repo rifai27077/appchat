@@ -61,6 +61,10 @@ p a {
     text-decoration: none;
 }
 
+p a:hover {
+    text-decoration: underline;
+}
+
 .google-btn {
     display: flex;
     align-items: center;
