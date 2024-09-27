@@ -154,48 +154,24 @@
             );
 
             // Update viewedBy ketika pesan dimuat di layar
-onSnapshot(messagesQuery, (snapshot) => {
-    snapshot.forEach(async (doc) => {
-        const data = doc.data();
+            onSnapshot(messagesQuery, (snapshot) => {
+                snapshot.forEach(async (doc) => {
+                    const data = doc.data();
 
-        // Jika user belum ada di array viewedBy, tambahkan
-        if (data.viewedBy && !data.viewedBy.includes(userName)) {
-            try {
-                await updateDoc(doc.ref, {
-                    viewedBy: [...data.viewedBy, userName] // Menambahkan userName ke array viewedBy
+                    // Jika user belum ada di array viewedBy, tambahkan
+                    if (data.viewedBy && !data.viewedBy.includes(userName)) {
+                        try {
+                            await updateDoc(doc.ref, {
+                                viewedBy: [...data.viewedBy, userName] // Menambahkan userName ke array viewedBy
+                            });
+                        } catch (error) {
+                            console.error("Error updating viewedBy: ", error);
+                        }
+                    }
                 });
-            } catch (error) {
-                console.error("Error updating viewedBy: ", error);
-            }
-        }
-    });
 
-    // Kode untuk menampilkan pesan...
-});
-
-// Show who viewed the message
-window.showViewedBy = async (messageId) => {
-    try {
-        const messageDoc = await getDoc(doc(db, "messages", messageId));
-        const messageData = messageDoc.data();
-        const viewers = messageData.viewedBy || [];
-
-        if (viewers.length > 0) {
-            const viewersList = viewers.map(viewer => `<li>${viewer}</li>`).join('');
-            Swal.fire({
-                title: 'Message viewed by:',
-                html: `<ul>${viewersList}</ul>`,
-                icon: 'info',
-                confirmButtonText: 'Close'
+                // Kode untuk menampilkan pesan...
             });
-        } else {
-            Swal.fire('No one has viewed this message yet.', '', 'info');
-        }
-    } catch (error) {
-        console.error("Error fetching viewedBy data: ", error);
-    }
-};
-
 
             // Real-time listener with onSnapshot
             onSnapshot(messagesQuery, (snapshot) => {
@@ -217,7 +193,8 @@ window.showViewedBy = async (messageId) => {
 
                     const messageClass = data.sender === userName ? 'self' : 'other';
 
-                    const viewedByButton = data.viewedBy && data.viewedBy.length > 0 
+                    // Hanya tampilkan tombol Info jika pengirim adalah user sendiri
+                    const viewedByButton = data.sender === userName && data.viewedBy && data.viewedBy.length > 0 
                         ? `<button onclick="showViewedBy('${doc.id}')">Info</button>`
                         : '';
 
@@ -273,29 +250,6 @@ window.showViewedBy = async (messageId) => {
             });
         });
 
-        // Show who viewed the message
-        window.showViewedBy = async (messageId) => {
-            try {
-                const messageDoc = await getDoc(doc(db, "messages", messageId));
-                const messageData = messageDoc.data();
-                const viewers = messageData.viewedBy || [];
-
-                if (viewers.length > 0) {
-                    const viewersList = viewers.map(viewer => `<li>${viewer}</li>`).join('');
-                    Swal.fire({
-                        title: 'Message viewed by:',
-                        html: `<ul>${viewersList}</ul>`,
-                        icon: 'info',
-                        confirmButtonText: 'Close'
-                    });
-                } else {
-                    Swal.fire('No one has viewed this message yet.', '', 'info');
-                }
-            } catch (error) {
-                console.error("Error fetching viewedBy data: ", error);
-            }
-        };
-
         function showDeleteMenu(li) {
             hideDeleteMenus();
             const deleteMenu = li.querySelector('.delete-menu');
@@ -305,26 +259,47 @@ window.showViewedBy = async (messageId) => {
         }
 
         function hideDeleteMenus() {
-            const deleteMenus = document.querySelectorAll('.delete-menu');
-            deleteMenus.forEach(menu => {
+            document.querySelectorAll('.delete-menu').forEach(menu => {
                 menu.style.display = 'none';
             });
         }
+
+        // Function to show viewed by users
+        window.showViewedBy = async (messageId) => {
+            const messageDoc = doc(db, "messages", messageId);
+            const docSnapshot = await getDoc(messageDoc);
+
+            if (docSnapshot.exists()) {
+                const data = docSnapshot.data();
+                const viewedByList = data.viewedBy && data.viewedBy.length > 0 ? data.viewedBy.join(', ') : 'No one has viewed this message yet.';
+
+                Swal.fire({
+                    title: 'Viewed By',
+                    text: viewedByList,
+                    icon: 'info'
+                });
+            } else {
+                console.error("No such document!");
+            }
+        };
     </script>
 </head>
 <body>
     <div class="container">
-        <div class="logout-button">
+        <header class="d-flex justify-content-between align-items-center mt-3">
+            <h1 id="user-name"></h1>
             <button id="logout-button" class="btn btn-danger">Logout</button>
+        </header>
+        <div id="messages" class="messages mt-4" style="height: 400px; overflow-y: scroll;">
+            <!-- Messages will be dynamically inserted here -->
         </div>
-        <div id="messages"></div>
-        <div class="scroll-button">
-            <button id="scroll-button">Scroll to Bottom</button>
+        <div class="input-group mt-3">
+            <form>
+                <input type="text" id="message" class="form-control" placeholder="Type a message" required>
+                <button class="btn btn-primary" type="submit">Send</button>
+            </form>
+            <button id="scroll-button" class="btn btn-secondary" style="display: none;">Scroll to Bottom</button>
         </div>
-        <form id="message-form">
-            <input type="text" id="message" placeholder="Type a message">
-            <button type="submit">Send</button>
-        </form>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
