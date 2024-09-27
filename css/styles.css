@@ -87,3 +87,28 @@ p a:hover {
 .google-btn:hover {
     background-color: #f0f0f0;
 }
+
+button {
+    background-color: black;
+    color: white;
+    padding: 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.delete-menu button {
+    margin-right: 5px;
+}
+
+.delete-menu button:hover {
+    background-color: #d33;
+}
+
+.delete-menu button:last-child {
+    background-color: #1F8E44;
+}
+
+.delete-menu button:last-child:hover {
+    background-color: #155d30;
+}

@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="css/chat.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -40,80 +40,64 @@
 
         // Logout functionality
         document.getElementById('logout-button').addEventListener('click', async () => {
-        const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: "You will be logged out!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, log out!'
-        });
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "You will be logged out!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, log out!'
+            });
 
-        if (result.isConfirmed) {
-            try {
-                await signOut(auth);
-                window.location.href = 'index.html'; // Redirect to login page on logout
-            } catch (error) {
-            console.error("Error during logout: ", error);
+            if (result.isConfirmed) {
+                try {
+                    await signOut(auth);
+                    window.location.href = 'index.html'; // Redirect to login page on logout
+                } catch (error) {
+                    console.error("Error during logout: ", error);
+                }
             }
-        }
         });
 
         // Delete message function
         window.deleteMessage = async (messageId) => {
-    const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!'
-    });
-
-    if (result.isConfirmed) {
-        try {
-            const messageDoc = doc(db, "messages", messageId);
-            await deleteDoc(messageDoc);
-
-            // Hide the deleted message without scrolling up
-            const messagesList = document.getElementById('messages');
-            const li = messagesList.querySelector(`li[data-id="${messageId}"]`);
-            const prevScrollHeight = messagesList.scrollHeight;
-
-            if (li) {
-                li.remove(); // Remove the message element
-            }
-
-            // Adjust scroll position
-            messagesList.scrollTop = prevScrollHeight; // Maintain scroll position
-
-            Swal.fire(
-                'Deleted!',
-                'Your message has been deleted.',
-                'success'
-            );
-        } catch (error) {
-            console.error("Error deleting document: ", error);
-        }
-    }
-};
-
-        // Show delete menu
-        const showDeleteMenu = (li) => {
-            hideDeleteMenus();
-            const deleteMenu = li.querySelector('.delete-menu');
-            if (deleteMenu) {
-                deleteMenu.style.display = 'block';
-            }
-        };
-
-        // Hide all delete menus
-        const hideDeleteMenus = () => {
-            document.querySelectorAll('.delete-menu').forEach(menu => {
-                menu.style.display = 'none';
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
             });
+
+            if (result.isConfirmed) {
+                try {
+                    const messageDoc = doc(db, "messages", messageId);
+                    await deleteDoc(messageDoc);
+
+                    // Hide the deleted message without scrolling up
+                    const messagesList = document.getElementById('messages');
+                    const li = messagesList.querySelector(`li[data-id="${messageId}"]`);
+                    const prevScrollHeight = messagesList.scrollHeight;
+
+                    if (li) {
+                        li.remove(); // Remove the message element
+                    }
+
+                    // Adjust scroll position
+                    messagesList.scrollTop = prevScrollHeight; // Maintain scroll position
+
+                    Swal.fire(
+                        'Deleted!',
+                        'Your message has been deleted.',
+                        'success'
+                    );
+                } catch (error) {
+                    console.error("Error deleting document: ", error);
+                }
+            }
         };
 
         // Send message
@@ -126,7 +110,8 @@
                     await addDoc(collection(db, "messages"), {
                         sender: userName,
                         message: message,
-                        timestamp: serverTimestamp() // Add server timestamp
+                        timestamp: serverTimestamp(),
+                        viewedBy: []
                     });
                     document.getElementById('message').value = ""; // Clear the input field
                 } catch (error) {
@@ -162,15 +147,62 @@
             const observer = new MutationObserver(scrollToBottom);
             observer.observe(messagesContainer, { childList: true });
 
-
             // Real-time message listener
-            const messagesRef = collection(db, "messages");
-            const messagesQuery = query(messagesRef, orderBy("timestamp", "asc"));
+            const messagesQuery = query(
+                collection(db, 'messages'), 
+                orderBy('timestamp')
+            );
+
+            // Update viewedBy ketika pesan dimuat di layar
+onSnapshot(messagesQuery, (snapshot) => {
+    snapshot.forEach(async (doc) => {
+        const data = doc.data();
+
+        // Jika user belum ada di array viewedBy, tambahkan
+        if (data.viewedBy && !data.viewedBy.includes(userName)) {
+            try {
+                await updateDoc(doc.ref, {
+                    viewedBy: [...data.viewedBy, userName] // Menambahkan userName ke array viewedBy
+                });
+            } catch (error) {
+                console.error("Error updating viewedBy: ", error);
+            }
+        }
+    });
+
+    // Kode untuk menampilkan pesan...
+});
+
+// Show who viewed the message
+window.showViewedBy = async (messageId) => {
+    try {
+        const messageDoc = await getDoc(doc(db, "messages", messageId));
+        const messageData = messageDoc.data();
+        const viewers = messageData.viewedBy || [];
+
+        if (viewers.length > 0) {
+            const viewersList = viewers.map(viewer => `<li>${viewer}</li>`).join('');
+            Swal.fire({
+                title: 'Message viewed by:',
+                html: `<ul>${viewersList}</ul>`,
+                icon: 'info',
+                confirmButtonText: 'Close'
+            });
+        } else {
+            Swal.fire('No one has viewed this message yet.', '', 'info');
+        }
+    } catch (error) {
+        console.error("Error fetching viewedBy data: ", error);
+    }
+};
+
+
+            // Real-time listener with onSnapshot
             onSnapshot(messagesQuery, (snapshot) => {
                 let html = "";
                 let lastDate = "";
 
-                snapshot.forEach(doc => {
+                snapshot.forEach((doc) => {
                     const data = doc.data();
                     const messageDate = new Date(data.timestamp.seconds * 1000);
                     const dateString = messageDate.toLocaleDateString();
@@ -182,8 +214,12 @@
 
                     const senderInitial = data.sender ? data.sender.charAt(0) : '?';
                     const timestamp = messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    
+
                     const messageClass = data.sender === userName ? 'self' : 'other';
+
+                    const viewedByButton = data.viewedBy && data.viewedBy.length > 0 
+                        ? `<button onclick="showViewedBy('${doc.id}')">Info</button>`
+                        : '';
 
                     html += `<li class="${messageClass}" data-id="${doc.id}">
                                 <div class="avatar">${senderInitial}</div>
@@ -194,6 +230,7 @@
                                     ${data.sender === userName ? `<div class="delete-menu">
                                         <button onclick="deleteMessage('${doc.id}')">Delete</button>
                                     </div>` : ''}
+                                    ${viewedByButton}
                                 </div>
                             </li>`;
                 });
@@ -201,7 +238,6 @@
                 const messagesList = document.getElementById('messages');
                 if (messagesList) {
                     messagesList.innerHTML = html;
-
                     messagesList.scrollTop = messagesList.scrollHeight;
 
                     document.querySelectorAll('#messages li').forEach(li => {
@@ -236,27 +272,58 @@
                 }
             });
         });
+
+        // Show who viewed the message
+        window.showViewedBy = async (messageId) => {
+            try {
+                const messageDoc = await getDoc(doc(db, "messages", messageId));
+                const messageData = messageDoc.data();
+                const viewers = messageData.viewedBy || [];
+
+                if (viewers.length > 0) {
+                    const viewersList = viewers.map(viewer => `<li>${viewer}</li>`).join('');
+                    Swal.fire({
+                        title: 'Message viewed by:',
+                        html: `<ul>${viewersList}</ul>`,
+                        icon: 'info',
+                        confirmButtonText: 'Close'
+                    });
+                } else {
+                    Swal.fire('No one has viewed this message yet.', '', 'info');
+                }
+            } catch (error) {
+                console.error("Error fetching viewedBy data: ", error);
+            }
+        };
+
+        function showDeleteMenu(li) {
+            hideDeleteMenus();
+            const deleteMenu = li.querySelector('.delete-menu');
+            if (deleteMenu) {
+                deleteMenu.style.display = 'block';
+            }
+        }
+
+        function hideDeleteMenus() {
+            const deleteMenus = document.querySelectorAll('.delete-menu');
+            deleteMenus.forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
     </script>
 </head>
 <body>
-    <div id="chat-container">
-        <!-- Header with user info and chat title -->
-        <div class="chat-header">
-            <h2>Hai <span id="user-name"></span> Welcome to <span>CitraChat</span></h2>
-            <div><button id="logout-button" class="btn btn-light btn-sm">Logout</button></div>
+    <div class="container">
+        <div class="logout-button">
+            <button id="logout-button" class="btn btn-danger">Logout</button>
         </div>
-
-        <!-- Messages List -->
-        <ul id="messages"></ul>
-
-        <button id="scroll-button" style="display: none; position: fixed; bottom: 80px; right: 20px; background-color: #1F8E44; color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 20px; cursor: pointer;">
-            ↓
-        </button>
-
-        <!-- Message Input Form -->
+        <div id="messages"></div>
+        <div class="scroll-button">
+            <button id="scroll-button">Scroll to Bottom</button>
+        </div>
         <form id="message-form">
-            <input type="text" id="message" placeholder="Type a message..." autocomplete="off" required>
-            <input type="submit" value="Send">
+            <input type="text" id="message" placeholder="Type a message">
+            <button type="submit">Send</button>
         </form>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
