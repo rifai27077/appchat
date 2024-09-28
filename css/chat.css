@@ -184,3 +184,28 @@ span {
     cursor: pointer;
     margin-top: 5px; /* Memberikan jarak antara avatar dan ikon info */
 }
+
+.reply-icon {
+    cursor: pointer;
+    margin-left: 10px;
+    display: inline-block;
+}
+
+.reply-icon svg {
+    fill: #1F8E44;
+    transition: fill 0.2s;
+}
+
+.reply-icon:hover svg {
+    fill: #0c6b28;
+}
+
+#reply-preview {
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #333;
+    background-color: #e9ecef;
+    padding: 5px;
+    border-left: 5px solid #1F8E44;
+    display: none; /* Hidden until a message is being replied to */
+}
