@@ -13,13 +13,13 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyAVnc78CVeW18QI_8PGMoUxc8rQKuclaSM",
-            authDomain: "socialmediaapp-33856.firebaseapp.com",
-            projectId: "socialmediaapp-33856",
-            storageBucket: "socialmediaapp-33856.appspot.com",
-            messagingSenderId: "832803806835",
-            appId: "1:832803806835:web:4f4c4d1739e0cee6281406",
-            measurementId: "G-WSQL8E6VYG"
+            apiKey: "AIzaSyA2OnmDZrnGn4Atsx8Lp7ypKnYefUvR-eM",
+            authDomain: "citrachat-ef540.firebaseapp.com",
+            projectId: "citrachat-ef540",
+            storageBucket: "citrachat-ef540.appspot.com",
+            messagingSenderId: "494277981422",
+            appId: "1:494277981422:web:fb3d67a36528a0168fefff",
+            measurementId: "G-WHNYWQ5M7M"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -88,12 +88,6 @@
 
                     // Adjust scroll position
                     messagesList.scrollTop = prevScrollHeight; // Maintain scroll position
-
-                    Swal.fire(
-                        'Deleted!',
-                        'Your message has been deleted.',
-                        'success'
-                    );
                 } catch (error) {
                     console.error("Error deleting document: ", error);
                 }
@@ -101,6 +95,11 @@
         };
 
         // Send message
+        const MAX_MESSAGES = 2;
+        const TIME_FRAME = 100;
+        let messageCount = 0;
+        let messageTimer;
+        
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.querySelector('form');
             form.addEventListener('submit', async (event) => {
@@ -110,6 +109,21 @@
 
                 if (message.trim() === "") {
                     Swal.fire('Error', 'Message cannot be empty!', 'error');
+                    return;
+                }
+
+                messageCount++;
+
+                if (messageTimer) {
+                    clearTimeout(messageTimer);
+                }
+                messageTimer = setTimeout(() => {
+                    messageCount = 0;
+                }, TIME_FRAME);
+
+                if (messageCount > MAX_MESSAGES) {
+                    Swal.fire('Warning', 'You are sending messages too quickly!', 'warning');
+                    messageCount--;
                     return;
                 }
         
