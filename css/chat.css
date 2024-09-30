@@ -209,3 +209,10 @@ span {
     border-left: 5px solid #1F8E44;
     display: none; /* Hidden until a message is being replied to */
 }
+
+emoji-picker {
+    display: none; /* Sembunyikan picker secara default */
+    position: absolute;
+    z-index: 100000;
+  }
+  
