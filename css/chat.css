@@ -210,9 +210,57 @@ span {
     display: none; /* Hidden until a message is being replied to */
 }
 
-emoji-picker {
-    display: none; /* Sembunyikan picker secara default */
+#emoji-toggle-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    margin-right: 10px;
+    outline: none;
+    transition: transform 0.2s;
+}
+
+#emoji-toggle-button:active {
+    transform: scale(1.2);
+}
+
+#emoji-picker {
     position: absolute;
-    z-index: 100000;
-  }
-  
+    bottom: 60px;
+    right: 10px;
+    width: 300px;
+    max-height: 250px;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow-y: scroll;
+    display: none; /* Hidden by default */
+    z-index: 1000;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    #emoji-toggle-button {
+        font-size: 20px;
+        margin-right: 8px;
+    }
+
+
+    #emoji-picker {
+        width: 100%; /* Full width on mobile */
+        bottom: 70px; /* Adjust position */
+        right: 0;
+        left: 0; /* Center picker on screen */
+        border-radius: 0; /* No rounded corners on mobile */
+        max-height: 200px;
+    }
+}
+
+/* Desktop adjustments */
+@media (min-width: 769px) {
+    #emoji-picker {
+        width: 300px;
+    }
+}
