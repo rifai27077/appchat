@@ -96,7 +96,7 @@
         document.getElementById('google-sign-in').addEventListener('click', async function() {
             try {
                 await signInWithPopup(auth, googleProvider);
-                window.location.href = "settings.html"; // Redirect on successful Google login
+                window.location.href = "chat.html.html"; // Redirect on successful Google login
             } catch (error) {
                 console.error("Error during Google sign-in: ", error.message);
                 alert(`Google login failed: ${error.message}`);
