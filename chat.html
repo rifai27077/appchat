@@ -378,7 +378,7 @@
                     userId: auth.currentUser.uid, // Simpan userId
                     sender: userName, // Nama pengguna (bisa berubah)
                     message: message,
-                    profilePicture: profilePicURL, // Simpan
+                    profilePicture: profilePicURL,
                     replyTo: replyId || null,
                     replySender: replySender || null,
                     replyMessage: replyMessageContent || null,
@@ -435,6 +435,22 @@
                 orderBy('timestamp')
             );
 
+            document.addEventListener('DOMContentLoaded', () => {
+            // Event listener untuk tombol close pada reply preview
+            document.getElementById('close-reply').addEventListener('click', () => {
+                // Sembunyikan preview balasan
+                document.getElementById('reply-preview').style.display = 'none';
+
+                // Reset hidden input dan variabel balasan
+                document.getElementById('reply-input').value = "";
+                replySender = "";
+                replyMessageContent = "";
+
+                console.log("Reply cancelled");
+            });
+        });
+
+
             let replySender = "";  // Menyimpan sender dari pesan yang dibalas
             let replyMessageContent = "";  // Menyimpan konten pesan yang dibalas
 
@@ -442,12 +458,31 @@
             window.replyMessage = (messageId, messageContent, sender) => {
                 const replyInput = document.getElementById('reply-input');
                 const replyPreview = document.getElementById('reply-preview');
-                
                 // Show the reply preview with sender and content
                 if (replyInput && replyPreview) {
-                    replyPreview.innerHTML = `<strong>Replying to ${sender}:</strong> ${messageContent}`;
+                    replyPreview.innerHTML = `
+                    <strong>Replying to ${sender}:</strong> ${messageContent}
+                    <span id="close-reply" style="position: absolute; right: 10; cursor: pointer">&times;</span>
+                    `;
                     replyPreview.style.display = 'block';
                     replyInput.value = messageId;
+
+                    replySender = sender;
+                    replyMessageContent = messageContent;
+
+                    scrollButton.style.bottom = '130px';
+
+                    const closeReplyButton = document.getElementById('close-reply');
+
+                    if (closeReplyButton) {  // Pastikan elemen ditemukan
+                        closeReplyButton.addEventListener('click', () => {
+                            replyPreview.style.display = 'none';
+                            scrollButton.style.bottom = '80px';
+                            replyInput.value = "";  // Reset input
+                            replySender = "";  // Reset replySender
+                            replyMessageContent = "";  // Reset replyMessageContent
+                        });
+                    }
                 }
             };
 
@@ -667,7 +702,9 @@
             ↓
         </button>
 
-        <div id="reply-preview" style="display: none; padding: 10px; background-color: #f8f9fa; border-left: 3px solid #1F8E44;"></div>
+        <div id="reply-preview" style="display: none; padding: 10px; background-color: #f8f9fa; border-left: 3px solid #1F8E44; position: relative;">
+            <span id="close-reply" style="position: absolute; right: 10px; cursor: pointer;">&times;</span>
+        </div>        
 
         <!-- Hidden input for storing the message being replied to -->
         <input type="hidden" id="reply-input">
