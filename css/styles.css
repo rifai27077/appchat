@@ -112,3 +112,10 @@ button {
 .delete-menu button:last-child:hover {
     background-color: #155d30;
 }
+
+.error-message {
+    color: red;
+    font-size: 0.9em;
+    margin-top: 5px;
+    display: block;
+}
