@@ -6,7 +6,6 @@
     <title>CitraChat - Sign Up</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="assets/logo.png" type="image/png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" />
 </head>
 <body>
     <div class="container">
@@ -24,13 +23,6 @@
             <input type="password" id="confirm-password" placeholder="Confirm password" required>
             <span id="confirm-password-error" class="error-message"></span>
             
-            <label for="profile-picture">Profile Picture (Optional)</label>
-            <input type="file" id="profile-picture" accept="image/*">
-            <div>
-                <img id="profile-preview" style="display: none; max-width: 100%; margin-top: 10px;">
-            </div>
-            <button type="button" id="crop-button" style="display: none;">Crop Image</button>
-            
             <button type="submit">Sign Up</button>
         </form>
         <p>Or Sign Up with</p>
@@ -43,28 +35,25 @@
         <p>Already have an account? <a href="sign-in.html">Sign in</a></p>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, updateProfile, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
         import { z } from 'https://cdn.jsdelivr.net/npm/zod@3.22.2/lib/index.mjs'; // Impor Zod
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDThhuBYsoan2OrlorB6biO3SOb-CzI9wo",
-            authDomain: "mediaapp-5c23d.firebaseapp.com",
-            projectId: "mediaapp-5c23d",
-            storageBucket: "mediaapp-5c23d.appspot.com",
-            messagingSenderId: "180785458635",
-            appId: "1:180785458635:web:b0547aba8a872453989a4e",
-            measurementId: "G-L11KH85FD9"
+            apiKey: "AIzaSyCSX175kLJm0vlor9F7ekbT4HLEcqR9QdU",
+            authDomain: "citrachat-5c8bd.firebaseapp.com",
+            projectId: "citrachat-5c8bd",
+            storageBucket: "citrachat-5c8bd.appspot.com",
+            messagingSenderId: "956742723116",
+            appId: "1:956742723116:web:e6f7e01e5225844479d389",
+  measurementId: "G-90Y5TX4HVL"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const storage = getStorage(app);
         const googleProvider = new GoogleAuthProvider();
 
         // Mendefinisikan skema Zod untuk validasi
@@ -74,8 +63,6 @@
             password: z.string().min(6, "Password must be at least 6 characters long"),
             confirmPassword: z.string().min(6, "Password must be at least 6 characters long.")
         });
-
-        let cropper;
 
         document.getElementById('register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -90,7 +77,6 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm-password').value;
-            const profilePicture = document.getElementById('profile-picture').files[0];
 
             // Validasi data menggunakan Zod
             try {
@@ -101,6 +87,7 @@
                     return;
                 }
 
+                // Check if username already exists
                 const usersRef = collection(db, 'users');
                 const q = query(usersRef, where("username", "==", username));
                 const querySnapshot = await getDocs(q);
@@ -110,139 +97,101 @@
                     return;
                 }
 
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
+                // Proceed with registration if username is unique
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then(userCredential => {
+                        const user = userCredential.user;
 
-                let profileURL = `https://ui-avatars.com/api/?name=${username.charAt(0)}&background=random&size=128`;
+                        // Update profile with username
+                        updateProfile(user, {
+                            displayName: username
+                        }).then(async () => {
+                            // Save the username to Firestore
+                            await addDoc(usersRef, {
+                                uid: user.uid,
+                                username: username,
+                                email: email
+                            });
 
-                // Upload cropped image if available
-                if (profilePicture) {
-                    const croppedCanvas = cropper.getCroppedCanvas();
-                    croppedCanvas.toBlob(async (blob) => {
-                        const file = new File([blob], "cropped-profile-picture.png", { type: "image/png" });
-                        const storageRef = ref(storage, `profilePictures/${user.uid}`);
-                        await uploadBytes(storageRef, file);
-                        profileURL = await getDownloadURL(storageRef);
-
-                        // Update user profile
-                        await updateProfile(user, {
-                            displayName: username,
-                            photoURL: profileURL
+                            // Send email verification
+                            sendEmailVerification(user)
+                                .then(() => {
+                                    alert("Registration successful! Please check your email to verify your account.");
+                                    window.location.href = "sign-in.html";
+                                })
+                                .catch(error => {
+                                    console.error("Error sending email verification: ", error.message);
+                                    alert("Registration successful but failed to send verification email. Please try again later.");
+                                });
+                        }).catch(error => {
+                            console.error("Error updating profile: ", error.message);
                         });
-
-                        // Add user data to Firestore
-                        await addDoc(usersRef, {
-                            uid: user.uid,
-                            username: username,
-                            email: email,
-                            profileURL: profileURL
-                        });
-
-                        await sendEmailVerification(user);
-                        alert("Registration successful! Please check your email to verify your account.");
-                        window.location.href = "sign-in.html";
+                    })
+                    .catch(error => {
+                        console.error("Error registering: ", error.message);
+                        alert(`Registration failed: ${error.message}`);
                     });
-                } else {
-                    // Update user profile without image
-                    await updateProfile(user, {
-                        displayName: username,
-                        photoURL: profileURL
-                    });
-
-                    // Add user data to Firestore
-                    await addDoc(usersRef, {
-                        uid: user.uid,
-                        username: username,
-                        email: email,
-                        profileURL: profileURL
-                    });
-
-                    await sendEmailVerification(user);
-                    alert("Registration successful! Please check your email to verify your account.");
-                    window.location.href = "sign-in.html";
-                }
 
             } catch (error) {
-                if (error.errors) {
-                    error.errors.forEach(err => {
-                        const field = err.path[0];
-                        document.getElementById(`${field}-error`).textContent = err.message;
-                    });
-                }
-            }
-        });
-
-        document.getElementById('profile-picture').addEventListener('change', function(e) {
-            const files = e.target.files;
-            if (files.length > 0) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const image = event.target.result;
-                    const imageElement = document.createElement('img');
-                    imageElement.src = image;
-
-                    // Inisialisasi Cropper.js
-                    const previewImage = document.createElement('img');
-                    previewImage.src = image;
-                    document.getElementById('profile-preview').style.display = 'block';
-                    document.getElementById('profile-preview').src = image;
-
-                    // Reset cropper jika sudah ada
-                    if (cropper) {
-                        cropper.destroy();
-                    }
-
-                    cropper = new Cropper(previewImage, {
-                        aspectRatio: 1,
-                        viewMode: 1,
-                        autoCropArea: 1,
-                    });
-
-                    // Tampilkan tombol crop
-                    document.getElementById('crop-button').style.display = 'block';
-                };
-                reader.readAsDataURL(files[0]);
-            }
-        });
-
-        document.getElementById('crop-button').addEventListener('click', () => {
-            if (cropper) {
-                cropper.getCroppedCanvas().toBlob(async (blob) => {
-                    if (blob) {
-                        const file = new File([blob], "cropped-profile-picture.png", { type: "image/png" });
-                        console.log('Cropped image file:', file);
-
-                        // Tampilkan gambar yang telah di-crop
-                        const croppedImageUrl = URL.createObjectURL(file);
-                        const profilePreview = document.getElementById('profile-preview');
-                        profilePreview.src = croppedImageUrl; // Update preview dengan gambar cropped
-                    } else {
-                        console.error("Failed to create blob from cropped canvas.");
+                error.errors.forEach(e => {
+                    if (e.path[0] === "username") {
+                        document.getElementById('username-error').textContent = e.message;
+                    } else if (e.path[0] === "email") {
+                        document.getElementById('email-error').textContent = e.message;
+                    } else if (e.path[0] === "password") {
+                        document.getElementById('password-error').textContent = e.message;
+                    } else if (e.path[0] === "confirmPassword") {
+                        document.getElementById('confirm-password-error').textContent = e.message;
                     }
                 });
             }
         });
 
-        document.getElementById('google-register').addEventListener('click', async () => {
+        document.getElementById('google-register').addEventListener('click', async function() {
             try {
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
+                const usernameFromGoogle = user.displayName; // Ambil username dari profil Google
 
-                const profileURL = user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=random&size=128`;
-                
-                // Tambahkan pengguna ke Firestore
+                // Cek apakah username sudah ada di Firestore
                 const usersRef = collection(db, 'users');
-                await addDoc(usersRef, {
-                    uid: user.uid,
-                    username: user.displayName,
-                    email: user.email,
-                    profileURL: profileURL
-                });
+                const q = query(usersRef, where("username", "==", usernameFromGoogle));
+                const querySnapshot = await getDocs(q);
 
-                alert("Registration successful!");
-                window.location.href = "sign-in.html";
+                if (!querySnapshot.empty) {
+                    // Jika username sudah ada, buat username baru
+                    let newUsername = usernameFromGoogle;
+                    let counter = 1;
+
+                    // Tambahkan angka untuk membuat username yang unik
+                    while (!querySnapshot.empty) {
+                        newUsername = `${usernameFromGoogle}${counter}`;
+                        const newQuery = query(usersRef, where("username", "==", newUsername));
+                        const newQuerySnapshot = await getDocs(newQuery);
+                        if (newQuerySnapshot.empty) {
+                            break; // Keluar dari loop jika username unik
+                        }
+                        counter++;
+                    }
+
+                    await addDoc(usersRef, {
+                        uid: user.uid,
+                        username: newUsername,
+                        email: user.email
+                    });
+                } else {
+                    // Jika username belum ada, simpan ke Firestore
+                    await addDoc(usersRef, {
+                        uid: user.uid,
+                        username: usernameFromGoogle,
+                        email: user.email
+                    });
+                }
+
+                // Arahkan ke halaman setelah pendaftaran berhasil
+                window.location.href = "chat.html";
             } catch (error) {
-                console.error("Error during Google sign-in:", error);
+                console.error("Error during Google sign up: ", error.message);
             }
         });
     </script>

@@ -512,6 +512,21 @@ span {
     color: var(--secondary-color);
 }
 
+.form-group #username  {
+    font-size: 1em; /* Ukuran font untuk input username */
+    padding: 8px; /* Padding untuk input */
+    border: 1px solid var(--primary-color); /* Border sesuai warna utama */
+    border-radius: 4px; /* Sudut input yang lebih bulat */
+    width: 80%; /* Menggunakan lebar penuh dari kontainer */
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group #username:focus {
+    border-color: var(--primary-color); /* Mengubah warna border saat fokus */
+    outline: none; /* Menghilangkan outline default */
+    box-shadow: 0 0 5px rgba(31, 142, 68, 0.5);
+}
+
 #edit-username-icon {
     cursor: pointer;
     width: 18px;

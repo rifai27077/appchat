@@ -40,18 +40,19 @@
 
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDThhuBYsoan2OrlorB6biO3SOb-CzI9wo",
-            authDomain: "mediaapp-5c23d.firebaseapp.com",
-            projectId: "mediaapp-5c23d",
-            storageBucket: "mediaapp-5c23d.appspot.com",
-            messagingSenderId: "180785458635",
-            appId: "1:180785458635:web:b0547aba8a872453989a4e",
-  measurementId: "G-L11KH85FD9"
+            apiKey: "AIzaSyCSX175kLJm0vlor9F7ekbT4HLEcqR9QdU",
+            authDomain: "citrachat-5c8bd.firebaseapp.com",
+            projectId: "citrachat-5c8bd",
+            storageBucket: "citrachat-5c8bd.appspot.com",
+            messagingSenderId: "956742723116",
+            appId: "1:956742723116:web:e6f7e01e5225844479d389",
+            measurementId: "G-90Y5TX4HVL"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
+        
 
         // Zod validation schema for sign-in
         const signInSchema = z.object({
@@ -78,6 +79,7 @@
                 await signInWithEmailAndPassword(auth, email, password);
                 window.location.href = "chat.html"; // Redirect on successful login
             } catch (error) {
+                // Handle Zod validation errors
                 if (error.errors) {
                     error.errors.forEach(e => {
                         if (e.path[0] === "email") {
@@ -87,7 +89,16 @@
                         }
                     });
                 } else {
-                    alert(`Login failed: ${error.message}`);
+                    // Handle Firebase Auth errors
+                    if (error.code === 'auth/invalid-credential') {
+                        alert('Login failed: Invalid credentials. Please try again.');
+                    } else if (error.code === 'auth/user-not-found') {
+                        document.getElementById('email-error').textContent = 'No user found with this email.';
+                    } else if (error.code === 'auth/wrong-password') {
+                        document.getElementById('password-error').textContent = 'Incorrect password.';
+                    } else {
+                        alert(`Login failed: ${error.message}`);
+                    }
                 }
             }
         });
@@ -104,5 +115,4 @@
         });
     </script>
 </body>
-
 </html>

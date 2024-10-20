@@ -20,13 +20,13 @@
 
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDThhuBYsoan2OrlorB6biO3SOb-CzI9wo",
-            authDomain: "mediaapp-5c23d.firebaseapp.com",
-            projectId: "mediaapp-5c23d",
-            storageBucket: "mediaapp-5c23d.appspot.com",
-            messagingSenderId: "180785458635",
-            appId: "1:180785458635:web:b0547aba8a872453989a4e",
-            measurementId: "G-L11KH85FD9"
+            apiKey: "AIzaSyCSX175kLJm0vlor9F7ekbT4HLEcqR9QdU",
+            authDomain: "citrachat-5c8bd.firebaseapp.com",
+            projectId: "citrachat-5c8bd",
+            storageBucket: "citrachat-5c8bd.appspot.com",
+            messagingSenderId: "956742723116",
+            appId: "1:956742723116:web:e6f7e01e5225844479d389",
+            measurementId: "G-90Y5TX4HVL"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -486,41 +486,37 @@
                 }
             };
 
-            // Update viewedBy ketika pesan dimuat di layar
-            onSnapshot(messagesQuery, (snapshot) => {
-                snapshot.forEach(async (doc) => {
-                    const data = doc.data();
-                    const profilePicURL = data.profilePicture || "assets/profile.svg"; // URL default jika tidak ada
-
-                    // Jika user belum ada di array viewedBy, tambahkan
-                    if (!data.viewedBy.includes(auth.currentUser.displayName)) {
-                        try {
-                            await updateDoc(doc.ref, {
-                                viewedBy: [...data.viewedBy, auth.currentUser.displayName] // Menambahkan userName ke array viewedBy
-                            });
-                        } catch (error) {
-                            console.error("Error updating viewedBy: ", error);
-                        }
-                    }
-                });
-
-                // Kode untuk menampilkan pesan...
-            });
-
             // Fungsi untuk menampilkan siapa saja yang sudah melihat pesan
             window.showViewedBy = async (messageId) => {
                 const messageDoc = await getDoc(doc(db, "messages", messageId));
+
                 if (messageDoc.exists()) {
                     const messageData = messageDoc.data();
                     let viewedBy = messageData.viewedBy || [];
+                    let viewedByNames = await Promise.all(viewedBy.map(async (userId) => {
+                        try {
+                            const userDoc = await getDoc(doc(db, "users", userId));
+                            if (userDoc.exists()) {
+                                return userDoc.data().username;  // Kembalikan username dari userId
+                            } else {
+                                return 'Unknown';  // Jika userId tidak ditemukan
+                            }
+                        } catch (error) {
+                            console.error("Error fetching user:", error);
+                            return 'Unknown';
+                        }
+                    }));
+
+                    // Hilangkan duplikasi nama
+                    viewedByNames = [...new Set(viewedByNames)];
 
                     // Hapus nama user sendiri dari daftar viewedBy
-                    viewedBy = viewedBy.filter(viewer => viewer !== userName);
+                    viewedByNames = viewedByNames.filter(name => name !== userName); // Gunakan viewedByNames, bukan viewedBy
 
-                    if (viewedBy.length > 0) {
+                    if (viewedByNames.length > 0) {
                         Swal.fire({
                             title: 'Viewed by:',
-                            html: `<ul>${viewedBy.map(viewer => `<li>${viewer}</li>`).join('')}</ul>`,
+                            html: `<ul>${viewedByNames.map(name => `<li>${name}</li>`).join('')}</ul>`, // Tampilkan nama yang telah diambil
                             icon: 'info',
                             confirmButtonText: 'Close'
                         });
@@ -537,19 +533,37 @@
                 }
             };
 
-
             // Real-time listener with onSnapshot
             onSnapshot(messagesQuery, async (snapshot) => {
                 let html = "";
                 let lastDate = "";
 
+                // Ambil userId dan username terbaru dari Firebase Auth
+                const currentUserId = auth.currentUser.uid;
+
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     const senderName = data.sender || "Unknown";
                     const messageContent = data.message;
-                    const messageDate = new Date(data.timestamp.seconds * 1000);
+                    const messageDate = data.timestamp ? new Date(data.timestamp.seconds * 1000) : new Date(); // Gunakan tanggal sekarang jika tidak ada timestamp
                     const dateString = messageDate.toLocaleDateString();
                     const profilePicURL = data.profilePicture || "assets/profile.svg"; // URL default jika tidak ada
+
+
+                    // Periksa apakah userId sudah ada di viewedBy sebelum menambahkannya
+                    if (!data.viewedBy.includes(currentUserId)) {
+                        // Tambahkan userId ke array viewedBy jika belum ada
+                        const updatedViewedBy = [...new Set([...data.viewedBy, currentUserId])];
+
+                        try {
+                            // Update dokumen Firestore dengan viewedBy yang sudah diperbarui
+                            updateDoc(doc.ref, {
+                                viewedBy: updatedViewedBy
+                            });
+                        } catch (error) {
+                            console.error("Error updating viewedBy: ", error);
+                        }
+                    }
 
                     const messageHtml = `
                         <li class="message-item">
@@ -609,7 +623,7 @@
                                     </div>` : ''}
                                 </div>
                             </li>`;
-        });
+                });
 
                 const messagesList = document.getElementById('messages');
                 if (messagesList) {
