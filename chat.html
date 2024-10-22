@@ -351,27 +351,31 @@
                 event.preventDefault();
                 const message = document.getElementById('message').value;
                 const replyId = document.getElementById('reply-input').value; // Ambil ID pesan yang di-reply
+                const sendButton = form.querySelector('input[type="submit"]');
 
                 if (message.trim() === "" || message.length > 500) {
                     Swal.fire('Error', 'Message cannot be empty!', 'error');
                     return;
                 }
+                
+                sendButton.disabled = true;
+                
                 const profilePicURL = auth.currentUser.photoURL || "assets/prof.png";
                 messageCount++;
-
+                
                 if (messageTimer) {
                     clearTimeout(messageTimer);
                 }
                 messageTimer = setTimeout(() => {
                     messageCount = 0;
                 }, TIME_FRAME);
-
+                
                 if (messageCount > MAX_MESSAGES) {
                     Swal.fire('Warning', 'You are sending messages too quickly!', 'warning');
                     messageCount--;
                     return;
                 }
-        
+                
                 try {
                 // Simpan pesan dengan informasi reply
                 await addDoc(collection(db, "messages"), {
@@ -393,8 +397,11 @@
                 // Reset variabel reply
                 replySender = "";
                 replyMessageContent = "";
+
+                sendButton.disabled = false; //
                 } catch (error) {
                     console.error("Error adding document: ", error);
+                    sendButton.disabled = false;
                 }
             });
 
