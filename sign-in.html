@@ -75,17 +75,45 @@
                 signInSchema.parse({ email, password });
 
                 // Attempt to sign in with email and password
-                await signInWithEmailAndPassword(auth, email, password);
-                iziToast.success({ 
-                    title: 'Success',
-                    message: 'Login successful!',
-                    position: 'topRight'
-                });
-                setTimeout(() => {
-                    window.location.href = "chat.html"; // Redirect on successful login
-                }, 2000)
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Cek apakah email sudah diverifikasi
+                if (user.emailVerified) {
+                    iziToast.success({
+                        title: 'Success',
+                        message: 'Login successful!',
+                        position: 'topRight'
+                    });
+                    setTimeout(() => {
+                        window.location.href = "chat.html"; // Redirect on successful login
+                    }, 2000);
+                } else {
+                    iziToast.error({
+                        title: 'Email not verified',
+                        message: 'Please verify your email before logging in.',
+                        position: 'topRight'
+                    });
+
+                    // Opsi: Kirim ulang email verifikasi jika pengguna meminta
+                    sendEmailVerification(user)
+                        .then(() => {
+                            iziToast.info({
+                                title: 'Verification email sent',
+                                message: 'Please check your inbox for the verification email.',
+                                position: 'topRight'
+                            });
+                        })
+                        .catch(error => {
+                            iziToast.error({
+                                title: 'Error',
+                                message: `Failed to send verification email: ${error.message}`,
+                                position: 'topRight'
+                            });
+                        });
+                }
             } catch (error) {
-                // Handle Zod validation errors
+                // Handle Zod validation errors or Firebase Auth errors
                 if (error.errors) {
                     error.errors.forEach(e => {
                         if (e.path[0] === "email") {
@@ -95,24 +123,11 @@
                         }
                     });
                 } else {
-                    // Handle Firebase Auth errors
-                    if (error.code === 'auth/invalid-credential') {
-                        iziToast.error({ 
-                            title: 'Error', 
-                            message: 'Invalid credentials. Please try again.', 
-                            position: 'topRight' 
-                        });
-                    } else if (error.code === 'auth/user-not-found') {
-                        document.getElementById('email-error').textContent = 'No user found with this email.';
-                    } else if (error.code === 'auth/wrong-password') {
-                        document.getElementById('password-error').textContent = 'Incorrect password.';
-                    } else {
-                        iziToast.error({ 
-                            title: 'Error', 
-                            message: `Login failed: ${error.message}`, 
-                            position: 'topRight' 
-                        });
-                    }
+                    iziToast.error({
+                        title: 'Login failed',
+                        message: error.message,
+                        position: 'topRight'
+                    });
                 }
             }
         });
