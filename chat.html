@@ -360,7 +360,7 @@
                 
                 sendButton.disabled = true;
                 
-                const profilePicURL = auth.currentUser.photoURL || "assets/prof.png";
+                const profilePicURL = auth.currentUser.photoURL || "assets/profile.png";
                 messageCount++;
                 
                 if (messageTimer) {
@@ -398,7 +398,7 @@
                 replySender = "";
                 replyMessageContent = "";
 
-                sendButton.disabled = false; //
+                sendButton.disabled = false; 
                 } catch (error) {
                     console.error("Error adding document: ", error);
                     sendButton.disabled = false;
@@ -555,7 +555,6 @@
                     const messageDate = data.timestamp ? new Date(data.timestamp.seconds * 1000) : new Date(); // Gunakan tanggal sekarang jika tidak ada timestamp
                     const dateString = messageDate.toLocaleDateString();
                     const profilePicURL = data.profilePicture || "assets/profile.svg"; // URL default jika tidak ada
-
 
                     // Periksa apakah userId sudah ada di viewedBy sebelum menambahkannya
                     if (!data.viewedBy.includes(currentUserId)) {
